@@ -578,7 +578,8 @@ void MergeTreeRangeReader::executePrewhereActionsAndFilterColumns(ReadResult & r
                         ErrorCodes::LOGICAL_ERROR);
     }
 
-    result.setFilter(filter);
+    if (filter)
+        result.setFilter(filter);
 }
 
 }
