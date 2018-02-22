@@ -407,7 +407,7 @@ static bool arrayHasNoElementsRead(const IColumn & column)
 }
 
 
-void MergeTreeReader::fillMissingColumns(Block & res, const Names & ordered_names, bool always_reorder)
+void MergeTreeReader::fillMissingColumns(Block & res, const Names & ordered_names, bool always_reorder, bool never_reorder)
 {
     if (!res)
         throw Exception("Empty block passed to fillMissingColumns", ErrorCodes::LOGICAL_ERROR);
@@ -495,16 +495,8 @@ void MergeTreeReader::fillMissingColumns(Block & res, const Names & ordered_name
             evaluateMissingDefaults(res, columns, storage.column_defaults, storage.context);
 
         /// sort columns to ensure consistent order among all blocks
-        if (should_sort)
-        {
-            Block ordered_block;
-
-            for (const auto & name : ordered_names)
-                if (res.has(name))
-                    ordered_block.insert(res.getByName(name));
-
-            std::swap(res, ordered_block);
-        }
+        if (!never_reorder && should_sort)
+            reorderColumns(res, ordered_names);
     }
     catch (Exception & e)
     {
@@ -512,6 +504,18 @@ void MergeTreeReader::fillMissingColumns(Block & res, const Names & ordered_name
         e.addMessage("(while reading from part " + path + ")");
         throw;
     }
+}
+
+
+void MergeTreeReader::reorderColumns(Block & res, const Names & ordered_names)
+{
+    Block ordered_block;
+
+    for (const auto & name : ordered_names)
+        if (res.has(name))
+            ordered_block.insert(res.getByName(name));
+
+    std::swap(res, ordered_block);
 }
 
 }

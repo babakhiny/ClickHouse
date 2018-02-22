@@ -41,7 +41,9 @@ public:
     /// Add columns from ordered_names that are not present in the block.
     /// Missing columns are added in the order specified by ordered_names.
     /// If at least one column was added, reorders all columns in the block according to ordered_names.
-    void fillMissingColumns(Block & res, const Names & ordered_names, const bool always_reorder);
+    void fillMissingColumns(Block & res, const Names & ordered_names, bool always_reorder, bool never_reorder=false);
+
+    void reorderColumns(Block & res, const Names & ordered_names);
 
     const NamesAndTypesList & getColumns() const { return columns; }
 

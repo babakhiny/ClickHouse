@@ -161,8 +161,9 @@ public:
 private:
 
     ReadResult startReadingChain(size_t max_rows, MarkRanges & ranges);
-    void continueReadingChain(ReadResult & result);
+    Block continueReadingChain(ReadResult & result);
     void executePrewhereActionsAndFilterColumns(ReadResult & result);
+    void filterBlock(Block & block, const ColumnPtr & filter) const;
 
     size_t index_granularity = 0;
     MergeTreeReader * merge_tree_reader = nullptr;
