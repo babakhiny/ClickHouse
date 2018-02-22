@@ -474,7 +474,7 @@ MergeTreeRangeReader::ReadResult MergeTreeRangeReader::startReadingChain(size_t 
 
 void MergeTreeRangeReader::continueReadingChain(ReadResult & result)
 {
-    if (result.numReadRows() == 0)
+    if (result.rowsPerGranule().empty())
     {
         /// If zero rows were read on prev step, than there is no more rows to read.
         /// Last granule may have less rows than index_granularity, so finish reading manually.
