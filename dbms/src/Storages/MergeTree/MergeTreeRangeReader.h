@@ -110,6 +110,7 @@ public:
         size_t numAddedRows() const { return num_added_rows; }
         /// The number of filtered rows at all steps in reading chain.
         size_t numFilteredRows() const { return num_filtered_rows; }
+        size_t numRowsToSkipInLastGranule() const { return num_rows_to_skip_in_last_granule; }
         /// The number of bytes read from disk.
         size_t numBytesRead() const { return num_bytes_read; }
         /// Filter you need to apply to newly-read columns in order to add them to block.
@@ -143,6 +144,8 @@ public:
         size_t num_filtered_rows = 0;
         /// Zero if filter is nullptr.
         size_t num_zeros_in_filter = 0;
+        /// The number of rows was removed from last granule after clear or optimize.
+        size_t num_rows_to_skip_in_last_granule = 0;
         /// Without any filtration.
         size_t num_bytes_read = 0;
         /// nullptr if prev reader hasn't prewhere_actions. Otherwise filter.size() >= num_read_rows.

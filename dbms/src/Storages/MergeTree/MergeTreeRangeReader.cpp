@@ -206,6 +206,7 @@ void MergeTreeRangeReader::ReadResult::adjustLastGranule()
 void MergeTreeRangeReader::ReadResult::clear()
 {
     /// Need to save information about the number of granules.
+    num_rows_to_skip_in_last_granule += rows_per_granule.back();
     rows_per_granule.assign(rows_per_granule.size(), 0);
     num_filtered_rows += num_read_rows - num_zeros_in_filter;
     num_read_rows = 0;
@@ -235,11 +236,14 @@ void MergeTreeRangeReader::ReadResult::optimize()
         auto & new_filter = static_cast<ColumnUInt8 &>(*new_filter_ptr);
         IColumn::Filter & new_data = new_filter.getData();
 
+        size_t rows_in_last_granule = rows_per_granule.back();
+
         collapseZeroTails(*prev_description.data, new_data);
 
         size_t num_removed_zeroes = new_filter.size() - num_read_rows;
         num_read_rows = new_filter.size();
         num_zeros_in_filter -= num_removed_zeroes;
+        num_rows_to_skip_in_last_granule += rows_in_last_granule - rows_per_granule.back();
 
         filter = std::move(new_filter_ptr);
     }
@@ -478,19 +482,7 @@ void MergeTreeRangeReader::continueReadingChain(ReadResult & result)
         return;
     }
 
-    size_t rows_to_skip_in_last_granule = 0;
-
-    {
-        size_t rows_in_last_granule = result.rowsPerGranule().back();
-        result.optimize();
-        rows_to_skip_in_last_granule = rows_in_last_granule - result.rowsPerGranule().back();
-
-        if (auto & filter = result.getFilter())
-        {
-            if (ConstantFilterDescription(*filter).always_false)
-                throw Exception("Shouldn't read rows with constant zero prewhere result.", ErrorCodes::LOGICAL_ERROR);
-        }
-    }
+    result.optimize();
 
     auto & rows_per_granule = result.rowsPerGranule();
     auto & started_ranges = result.startedRanges();
@@ -514,7 +506,7 @@ void MergeTreeRangeReader::continueReadingChain(ReadResult & result)
         added_rows += stream.read(result.block, rows_per_granule[i], !last);
     }
 
-    stream.skip(rows_to_skip_in_last_granule);
+    stream.skip(result.numRowsToSkipInLastGranule());
     added_rows += stream.finalize(result.block);
 
     /// added_rows may be zero if all columns were read in prewhere and it's ok.
