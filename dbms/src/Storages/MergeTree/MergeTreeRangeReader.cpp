@@ -564,8 +564,9 @@ void MergeTreeRangeReader::executePrewhereActionsAndFilterColumns(ReadResult & r
     {
         prewhere_actions->execute(result.block);
         auto & prewhere_column = result.block.getByName(*prewhere_column_name);
+        size_t rows = result.block.rows();
         filter = std::move(prewhere_column.column);
-        prewhere_column.column = prewhere_column.type->createColumnConst(result.block.rows(), UInt64(1));
+        prewhere_column.column = prewhere_column.type->createColumnConst(rows, UInt64(1));
     }
 
     if (filter && result.getFilter())
