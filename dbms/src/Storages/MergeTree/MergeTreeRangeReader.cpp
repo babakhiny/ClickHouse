@@ -424,13 +424,13 @@ MergeTreeRangeReader::ReadResult MergeTreeRangeReader::read(size_t max_rows, Mar
         prev_bytes = read_result.block.bytes();
         Block block = continueReadingChain(read_result);
 
-        auto filter = read_result.getFilter();
-        if (filter)
-            filterBlock(block, filter);
-
         if (block)
         {
             merge_tree_reader->fillMissingColumns(block, *ordered_names, always_reorder, true);
+
+            const auto & filter = read_result.getFilter();
+            if (filter)
+                filterBlock(block, filter);
 
             for (auto i : ext::range(0, block.columns()))
                 read_result.block.insert(std::move(block.getByPosition(i)));
